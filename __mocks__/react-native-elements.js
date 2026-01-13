@@ -8,4 +8,8 @@ function Text(props) {
   return React.createElement('Text', props);
 }
 
-module.exports = { Button, Text };
+function Icon() {
+  return null;
+}
+
+module.exports = { Button, Text, Icon };

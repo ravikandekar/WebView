@@ -3,17 +3,18 @@ import {
   View,
   StyleSheet,
   SafeAreaView,
-  StatusBar,
   TouchableOpacity,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { Platform } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
 import { Button, Text } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { notificationService } from '../services/NotificationService';
+import { AppHeader } from '../components/AppHeader';
 
 type VideoPlayerScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'VideoPlayer'>;
 
@@ -22,7 +23,7 @@ const HLS_STREAM_URL = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
 export const VideoPlayerScreen = () => {
   const navigation = useNavigation<VideoPlayerScreenNavigationProp>();
   const videoRef = useRef<VideoRef>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -59,6 +60,7 @@ export const VideoPlayerScreen = () => {
   const handleVideoLoad = (data: any) => {
     setIsLoading(false);
     setDuration(data.duration);
+    setIsPlaying(true);
     notificationService.displayVideoNotification();
   };
 
@@ -72,6 +74,23 @@ export const VideoPlayerScreen = () => {
     setCurrentTime(data.currentTime);
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        setIsPlaying(false);
+        if (Platform.OS === 'ios' && isFullscreen) {
+          videoRef.current?.dismissFullscreenPlayer?.();
+          setIsFullscreen(false);
+          return true;
+        }
+        navigation.navigate('WebView');
+        return true;
+      };
+      const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => sub.remove();
+    }, [isFullscreen, navigation])
+  );
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -80,12 +99,15 @@ export const VideoPlayerScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" hidden={isFullscreen} />
-      
-      <View style={styles.header}>
-        <Text h3 style={styles.title}>Video Player</Text>
-        <Text style={styles.subtitle}>HLS Stream Playback</Text>
-      </View>
+      {!isFullscreen && (
+        <AppHeader
+          title="Video Player"
+          subtitle="HLS Stream Playback"
+          theme="dark"
+          showBack
+          onBackPress={() => navigation.navigate('WebView')}
+        />
+      )}
 
       <View style={[styles.videoContainer, isFullscreen ? styles.videoContainerFullscreen : null]}>
         {isLoading && (
@@ -173,19 +195,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: '#1a1a1a',
-  },
-  title: {
-    color: '#ffffff',
-    marginBottom: 5,
-  },
-  subtitle: {
-    color: '#cccccc',
-    fontSize: 16,
   },
   videoContainer: {
     height: 250,
