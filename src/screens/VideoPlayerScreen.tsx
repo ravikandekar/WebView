@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Platform } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
-import { Button, Text } from 'react-native-elements';
+import { Button, Text, Icon, Slider } from 'react-native-elements';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
@@ -132,36 +132,41 @@ export const VideoPlayerScreen = () => {
 
         <View style={styles.controlsOverlay}>
           <View style={styles.topControls}>
-            <TouchableOpacity style={styles.controlButton} onPress={handleMute}>
-              <Text style={styles.controlButtonText}>
-                {isMuted ? '🔇' : '🔊'}
-              </Text>
+            <TouchableOpacity style={styles.iconButton} onPress={handleMute}>
+              <Icon name={isMuted ? 'volume-off' : 'volume-up'} type="font-awesome" color="#ffffff" size={24} />
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.controlButton} onPress={handleFullscreen}>
-              <Text style={styles.controlButtonText}>
-                {isFullscreen ? '🗗' : '🗖'}
-              </Text>
+            <TouchableOpacity style={styles.iconButton} onPress={handleFullscreen}>
+              <Icon name={isFullscreen ? 'compress' : 'expand'} type="font-awesome" color="#ffffff" size={24} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.centerControls}>
             <TouchableOpacity style={styles.seekButton} onPress={() => handleSeek(-10)}>
-              <Text style={styles.seekButtonText}>⏪ -10s</Text>
+              <Icon name="backward" type="font-awesome" color="#ffffff" size={20} />
+              <Text style={styles.seekLabel}>-10s</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity style={styles.playPauseButton} onPress={handlePlayPause}>
-              <Text style={styles.playPauseButtonText}>
-                {isPlaying ? '⏸️' : '▶️'}
-              </Text>
+              <Icon name={isPlaying ? 'pause' : 'play'} type="font-awesome" color="#ffffff" size={26} />
             </TouchableOpacity>
-            
             <TouchableOpacity style={styles.seekButton} onPress={() => handleSeek(10)}>
-              <Text style={styles.seekButtonText}>+10s ⏩</Text>
+              <Text style={styles.seekLabel}>+10s</Text>
+              <Icon name="forward" type="font-awesome" color="#ffffff" size={20} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.bottomControls}>
+            <Slider
+              value={currentTime}
+              minimumValue={0}
+              maximumValue={duration || 0}
+              step={1}
+              onSlidingComplete={(val: number) => videoRef.current?.seek(val)}
+              minimumTrackTintColor="#2196F3"
+              maximumTrackTintColor="rgba(255,255,255,0.3)"
+              thumbTintColor="#ffffff"
+              thumbStyle={styles.sliderThumb}
+              trackStyle={styles.sliderTrack}
+            />
             <Text style={styles.timeText}>
               {formatTime(currentTime)} / {formatTime(duration)}
             </Text>
@@ -241,18 +246,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 16,
   },
   bottomControls: {
     alignItems: 'center',
+    paddingHorizontal: 10,
+    gap: 6,
   },
-  controlButton: {
+  iconButton: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 20,
     padding: 8,
-  },
-  controlButtonText: {
-    fontSize: 20,
-    color: '#ffffff',
   },
   playPauseButton: {
     backgroundColor: 'rgba(0,0,0,0.7)',
@@ -260,16 +264,16 @@ const styles = StyleSheet.create({
     padding: 15,
     marginHorizontal: 20,
   },
-  playPauseButtonText: {
-    fontSize: 30,
-    color: '#ffffff',
-  },
   seekButton: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 15,
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  seekButtonText: {
+  seekLabel: {
     fontSize: 14,
     color: '#ffffff',
     fontWeight: 'bold',
@@ -281,6 +285,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 5,
+  },
+  sliderThumb: {
+    width: 14,
+    height: 14,
+  },
+  sliderTrack: {
+    height: 3,
+    borderRadius: 2,
   },
   infoContainer: {
     paddingHorizontal: 20,
